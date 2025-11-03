@@ -47,14 +47,14 @@ Claude Code 插件是通过自定义斜杠命令（Slash Commands）、专用代
 ### 方式一：使用 Claude Code 命令安装（推荐）
 
 ```bash
-# 启动 Claude Code
-claude
+# 1. 添加插件市场
+claude plugin marketplace add https://github.com/ChamHerry/claude-code-third-party-plugins
 
-# 使用 plugin add 命令添加整个市场
-/plugin add https://github.com/ChamHerry/claude-code-third-party-plugins
+# 2. 安装插件
+claude plugin install project-init
 
-# 或者仅添加特定插件
-/plugin add https://github.com/ChamHerry/claude-code-third-party-plugins/tree/main/plugins/project-init
+# 查看已安装的插件
+claude plugin list
 ```
 
 ### 方式二：手动克隆安装
@@ -98,6 +98,31 @@ claude
 
 # 使用插件命令（以 project-init 为例）
 /project-init
+```
+
+### 📦 插件管理命令
+
+```bash
+# 查看所有已安装的插件
+claude plugin list
+
+# 查看配置的市场
+claude plugin marketplace list
+
+# 更新市场信息
+claude plugin marketplace update
+
+# 卸载插件
+claude plugin uninstall project-init
+
+# 禁用插件（不删除）
+claude plugin disable project-init
+
+# 启用插件
+claude plugin enable project-init
+
+# 验证插件配置
+claude plugin validate ~/.claude/plugins/project-init
 ```
 
 ## 📖 插件文档
