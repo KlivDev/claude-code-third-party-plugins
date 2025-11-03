@@ -1,11 +1,15 @@
 ---
-allowed-tools: Read, Write, AskUserQuestion, Bash(date:*)
-description: 基于内置模板快速初始化项目 CLAUDE.md 规范文件（完全跨平台）
+allowed-tools: Read, Write, AskUserQuestion, Bash(date:*), Glob, Grep
+description: 智能分析项目并生成 CLAUDE.md 规范文件（完全跨平台）
 ---
 
-基于内置 CLAUDE_TEMPLATE.md 模板，通过交互式问答生成项目的 CLAUDE.md 开发规范文件。
+智能分析现有项目结构和配置文件,自动推断技术栈、架构模式等信息,**只对无法确定的信息进行询问**,最终生成项目的 CLAUDE.md 开发规范文件。
 
-**跨平台支持**: 此命令完全兼容 Windows / macOS / Linux
+**核心特性**:
+- 🔍 **智能分析**: 自动检测项目类型、语言、框架
+- 💡 **按需询问**: 只对无法推断的信息询问用户
+- 🎯 **数据优先**: 优先使用项目实际数据,避免猜测
+- 🌐 **跨平台**: 完全兼容 Windows / macOS / Linux
 
 ---
 
@@ -287,158 +291,328 @@ a. 检查当前目录是否已存在 CLAUDE.md 文件
      - 选项 3: "取消操作" - 退出命令
    - 如果用户选择取消，立即终止执行并输出提示信息
 
-### 2. 信息收集
+### 2. 项目分析（智能推断）
 
-使用 AskUserQuestion 工具分批收集用户输入。注意：每个选项都要提供详细的 description 说明。
+**核心原则**: 数据驱动，避免猜测。通过分析项目文件自动推断信息，减少用户输入负担。
 
-#### 第一批：项目核心信息
+#### a. 检测项目类型
 
-**问题 1：项目名称**
-- header: "项目名称"
-- question: "请输入项目名称："
-- multiSelect: false
-- options:
-  - label: "使用当前目录名"
-    description: "自动使用当前目录名作为项目名称"
-  - Other: 用户自定义输入
+使用 Read 工具检查项目配置文件：
 
-**问题 2：项目描述**
-- header: "项目描述"
-- question: "请用一句话描述项目："
-- multiSelect: false
-- options:
-  - label: "Web 应用后端服务"
-    description: "提供 RESTful API 的后端服务"
-  - label: "前端用户界面应用"
-    description: "面向用户的前端界面应用"
-  - label: "数据处理和分析系统"
-    description: "数据采集、处理、分析和可视化系统"
-  - label: "微服务架构项目"
-    description: "基于微服务架构的分布式系统"
-  - Other: 自定义项目描述
+**Node.js/TypeScript 项目检测**:
+```bash
+检测文件: package.json
+提取信息:
+  - 项目名称: name 字段
+  - 项目描述: description 字段
+  - 语言: 检查 devDependencies 中是否有 typescript
+  - 框架: 从 dependencies 推断
+    - "next" → Next.js
+    - "react" → React
+    - "vue" → Vue
+    - "express" → Express
+    - "nestjs" → NestJS
+  - 测试框架: 从 devDependencies 推断 (jest, vitest, mocha 等)
+  - 代码风格: 检查 eslintConfig, prettier 配置
+```
 
-#### 第二批：技术栈信息
+**Go 项目检测**:
+```bash
+检测文件: go.mod
+提取信息:
+  - 项目名称: module 声明
+  - 语言版本: go 版本行
+  - 框架: 从 require 推断
+    - "gin-gonic/gin" → Gin
+    - "labstack/echo" → Echo
+    - "gofiber/fiber" → Fiber
 
-**问题 3：开发语言**
-- header: "开发语言"
-- question: "项目主要使用什么开发语言？"
-- multiSelect: false
-- options:
-  - label: "Go 1.21+"
-    description: "高性能并发处理，适合后端服务"
-  - label: "Python 3.10+"
-    description: "数据处理和 AI 应用首选"
-  - label: "TypeScript 5.0+"
-    description: "类型安全的前端开发"
-  - label: "Java 17+"
-    description: "企业级应用开发"
-  - Other: 自定义语言
+检测文件: go.sum (确认依赖)
+```
 
-**问题 4：主要框架**
-- header: "框架选择"
-- question: "项目使用什么主要框架？"
-- multiSelect: false
-- options: 根据上一步选择的语言，提供对应的框架选项
-  - Go: "Gin", "Echo", "Fiber"
-  - Python: "FastAPI", "Django", "Flask"
-  - TypeScript: "Next.js", "React", "Vue"
-  - Java: "Spring Boot", "Micronaut", "Quarkus"
-  - Other: 自定义框架
+**Python 项目检测**:
+```bash
+检测文件: pyproject.toml (优先) 或 requirements.txt 或 setup.py
+提取信息:
+  - 项目名称: [project].name 或从目录名推断
+  - 语言版本: requires-python 字段
+  - 框架: 从依赖推断
+    - "fastapi" → FastAPI
+    - "django" → Django
+    - "flask" → Flask
+  - 测试框架: pytest, unittest 等
+```
 
-**问题 5：数据存储**
-- header: "数据存储"
-- question: "项目使用什么数据存储技术？（可多选）"
-- multiSelect: true
-- options:
-  - label: "MySQL / PostgreSQL"
-    description: "关系型数据库"
-  - label: "MongoDB / DynamoDB"
-    description: "文档数据库"
-  - label: "Redis / Memcached"
-    description: "缓存系统"
-  - label: "Elasticsearch"
-    description: "搜索引擎"
-  - Other: 自定义存储技术
+**Java 项目检测**:
+```bash
+检测文件: pom.xml 或 build.gradle
+提取信息:
+  - 项目名称: artifactId 或 name
+  - 语言版本: Java version
+  - 框架: 从依赖推断
+    - "spring-boot" → Spring Boot
+    - "micronaut" → Micronaut
+    - "quarkus" → Quarkus
+```
 
-#### 第三批：架构配置
+#### b. 分析项目结构
 
-**问题 6：项目架构**
-- header: "架构模式"
-- question: "项目采用什么架构模式？"
-- multiSelect: false
-- options:
-  - label: "分层架构（MVC/三层架构）"
-    description: "Controller → Service → DAO，适合传统应用"
-  - label: "微服务架构"
-    description: "服务拆分，独立部署和扩展"
-  - label: "Serverless"
-    description: "事件驱动，按需计费"
-  - label: "单体应用"
-    description: "简单直接，适合小型项目"
-  - Other: 自定义架构
+使用 Glob 工具列举项目目录，推断架构模式：
 
-**问题 7：代码风格规范**
-- header: "命名规范"
-- question: "项目采用什么命名和代码风格规范？"
-- multiSelect: false
-- options:
-  - label: "驼峰命名（camelCase）"
-    description: "首字母小写，后续单词首字母大写"
-  - label: "帕斯卡命名（PascalCase）"
-    description: "所有单词首字母大写"
-  - label: "下划线命名（snake_case）"
-    description: "单词间用下划线连接"
-  - label: "遵循语言官方规范"
-    description: "推荐：使用语言社区的标准规范"
-  - Other: 自定义命名规范
+```bash
+# 检测顶层目录
+检测路径:
+  - src/, lib/, pkg/ (源代码目录)
+  - test/, tests/, __tests__/ (测试目录)
+  - docs/ (文档目录)
 
-#### 第四批：开发规则配置
+架构模式推断:
+  - 存在 src/controllers, src/services, src/models → 分层架构（MVC）
+  - 存在 src/api, src/service, src/logic, src/data → 分层架构（四层）
+  - 存在 packages/, services/, apps/ → 微服务架构
+  - 存在 functions/, lambda/ → Serverless
+  - 否则 → 单体应用
+```
 
-**问题 8：测试覆盖率要求**
-- header: "测试要求"
-- question: "是否启用测试覆盖率要求？"
-- multiSelect: false
-- options:
-  - label: "启用（要求 >80%）"
-    description: "严格测试要求，保证代码质量"
-  - label: "启用（要求 >60%）"
-    description: "中等测试要求"
-  - label: "不强制要求"
-    description: "允许灵活处理"
+#### c. 分析代码风格
 
-**问题 9：Git 提交流程**
-- header: "提交规范"
-- question: "Git 提交是否需要审批确认？"
-- multiSelect: false
-- options:
-  - label: "需要（使用 AskUserQuestion）"
-    description: "提交前必须询问用户确认"
-  - label: "不需要"
-    description: "允许直接提交"
+使用 Read 工具读取几个代码文件样本：
 
-### 3. 生成 CLAUDE.md
+```bash
+# 读取 2-3 个代码文件
+# 分析变量命名模式
 
-根据收集的信息，执行以下步骤：
+命名规范检测:
+  - 检测变量/函数名中的模式
+  - camelCase: 首字母小写 (userName, getUserData)
+  - PascalCase: 首字母大写 (UserName, GetUserData)
+  - snake_case: 下划线连接 (user_name, get_user_data)
+
+Lint 配置检测:
+  - .eslintrc.* (JavaScript/TypeScript)
+  - .golangci.yml (Go)
+  - .flake8, pyproject.toml (Python)
+  - checkstyle.xml (Java)
+```
+
+#### d. 分析数据存储
+
+使用 Grep 工具搜索数据库相关导入和配置：
+
+```bash
+# 搜索数据库导入语句
+关键词:
+  - "mysql", "pg", "postgres" → PostgreSQL/MySQL
+  - "mongodb", "mongo" → MongoDB
+  - "redis" → Redis
+  - "elasticsearch", "es" → Elasticsearch
+
+# 搜索配置文件
+检查:
+  - docker-compose.yml (服务定义)
+  - .env.example (环境变量示例)
+  - config/ 目录下的配置文件
+```
+
+#### e. 检测测试配置
+
+```bash
+检测测试目录:
+  - test/, tests/, __tests__/ 是否存在
+  - 测试文件数量和覆盖情况
+
+检测测试配置:
+  - jest.config.js, vitest.config.ts (JS/TS)
+  - go.mod 中的测试依赖
+  - pytest.ini, tox.ini (Python)
+  - pom.xml 中的测试配置 (Java)
+
+推断测试要求:
+  - 存在完善测试配置 + 多个测试文件 → 建议 >80%
+  - 存在基础测试 → 建议 >60%
+  - 无测试 → 不强制要求
+```
+
+#### f. 记录推断结果
+
+创建推断结果数据结构,记录每项信息的值和置信度:
+
+```javascript
+分析结果 = {
+  projectName: {
+    value: "从配置文件读取的名称",
+    source: "package.json",
+    confidence: "high"  // high: 确定 | medium: 较确定 | low: 需确认 | none: 未检测到
+  },
+  projectDescription: {
+    value: "从配置文件读取的描述",
+    source: "package.json",
+    confidence: "medium"  // 描述可能不准确,建议用户确认
+  },
+  language: {
+    value: "TypeScript 5.0+",
+    source: "package.json devDependencies",
+    confidence: "high"
+  },
+  framework: {
+    value: "Next.js",
+    source: "package.json dependencies",
+    confidence: "high"
+  },
+  storage: {
+    value: ["PostgreSQL", "Redis"],
+    source: "grep 搜索和 docker-compose.yml",
+    confidence: "medium"
+  },
+  architecture: {
+    value: "分层架构",
+    source: "目录结构分析",
+    confidence: "medium"
+  },
+  namingStyle: {
+    value: "驼峰命名（camelCase）",
+    source: "代码文件分析",
+    confidence: "high"
+  },
+  testCoverage: {
+    value: ">80%",
+    source: "测试配置和文件检测",
+    confidence: "medium"
+  },
+  gitApproval: {
+    value: null,  // 这个需要用户决策
+    source: null,
+    confidence: "none"
+  }
+}
+```
+
+#### g. 输出分析结果
+
+输出分析摘要供用户查看:
+
+```
+🔍 项目分析完成！
+
+📊 自动检测结果:
+✅ 项目类型: TypeScript 项目 (来源: package.json)
+✅ 项目名称: my-app (来源: package.json)
+✅ 开发语言: TypeScript 5.0+ (来源: package.json)
+✅ 主要框架: Next.js (来源: dependencies)
+✅ 数据存储: PostgreSQL, Redis (来源: docker-compose.yml)
+✅ 架构模式: 分层架构 (来源: 目录结构)
+✅ 命名规范: 驼峰命名 (来源: 代码分析)
+⚠️  测试要求: 建议 >80% (来源: 测试配置)
+
+❓ 需要您确认的信息:
+- 项目描述 (自动检测可能不准确)
+- Git 提交流程 (需要您的决策)
+```
+
+### 3. 智能信息收集
+
+根据项目分析结果,**只对置信度低或无法推断的信息进行询问**。
+
+#### 询问策略:
+
+**A. confidence = "high" 的信息**:
+- ✅ 直接使用,不询问
+- 在最终确认时展示给用户
+
+**B. confidence = "medium" 的信息**:
+- ⚠️ 作为推荐选项,但仍询问用户确认
+- 在选项中标注 "(已检测)"
+
+**C. confidence = "low" 或 "none" 的信息**:
+- ❌ 必须询问用户
+- 提供常见选项供选择
+
+#### 询问示例:
+
+**场景 1: 项目名称 confidence="high"**
+```
+不询问,直接使用检测到的值
+```
+
+**场景 2: 项目描述 confidence="medium"**
+```yaml
+使用 AskUserQuestion:
+  question: "请确认项目描述："
+  header: "项目描述"
+  multiSelect: false
+  options:
+    - label: "使用检测到的描述 (已检测)"
+      description: "Web application for user management"
+    - label: "Web 应用后端服务"
+      description: "提供 RESTful API 的后端服务"
+    - Other: 自定义描述
+```
+
+**场景 3: 数据存储 confidence="medium"**
+```yaml
+使用 AskUserQuestion:
+  question: "请确认项目使用的数据存储技术（可多选）："
+  header: "数据存储"
+  multiSelect: true
+  options:
+    - label: "PostgreSQL (已检测)"
+      description: "关系型数据库"
+    - label: "Redis (已检测)"
+      description: "缓存系统"
+    - label: "MySQL"
+      description: "关系型数据库"
+    - Other: 其他存储技术
+```
+
+**场景 4: Git 提交流程 confidence="none"**
+```yaml
+使用 AskUserQuestion:
+  question: "Git 提交是否需要审批确认？"
+  header: "提交规范"
+  multiSelect: false
+  options:
+    - label: "需要（使用 AskUserQuestion）"
+      description: "提交前必须询问用户确认"
+    - label: "不需要"
+      description: "允许直接提交"
+```
+
+#### 分批询问流程:
+
+根据实际需要询问的问题数量,灵活分批:
+
+**如果需要询问 0-2 个问题**: 一次性询问
+**如果需要询问 3-5 个问题**: 分 2 批询问
+**如果需要询问 6+ 个问题**: 分 3-4 批询问
+
+**优先级排序**:
+1. 高优先级: 项目描述、架构模式 (影响模板填充)
+2. 中优先级: 数据存储、命名规范 (可能影响规范细节)
+3. 低优先级: 测试要求、Git 提交规范 (配置项)
+
+### 4. 生成 CLAUDE.md
+
+根据分析结果和用户确认的信息，执行以下步骤：
 
 a. 从"内置模板"部分提取模板内容（```template 和 ``` 之间的内容）
 
 b. 创建变量映射表并进行字符串替换：
-   - `[项目名称]` → 用户输入的项目名称
-   - `[项目一句话描述]` → 用户输入的项目描述
-   - `[框架名称和版本]` → 用户选择的框架
-   - `[数据库/缓存技术]` → 用户选择的数据存储（多选则用逗号连接）
-   - `[语言和版本]` → 用户选择的开发语言
-   - `[命名规范]` → 用户选择的代码风格
+   - `[项目名称]` → 分析结果中的项目名称（或用户输入）
+   - `[项目一句话描述]` → 分析结果中的项目描述（或用户输入）
+   - `[框架名称和版本]` → 分析结果中的框架（或用户选择）
+   - `[数据库/缓存技术]` → 分析结果中的数据存储（多个则用逗号连接）
+   - `[语言和版本]` → 分析结果中的开发语言（或用户选择）
+   - `[命名规范]` → 分析结果中的代码风格（或用户选择）
 
 c. 添加生成时间戳：
    - 使用 Bash date 命令获取当前日期
    - 替换模板最后的 `[日期]` 为实际日期（格式：YYYY-MM-DD）
 
-d. 根据用户的测试和 Git 配置，调整对应章节：
-   - 如果选择"不强制要求"测试覆盖率，修改"测试规范"章节，删除覆盖率要求
-   - 如果选择"不需要" Git 审批，修改"版本控制"规则，移除 AskUserQuestion 要求
+d. 根据分析结果和用户配置，调整对应章节：
+   - 如果测试覆盖率选择"不强制要求"，修改"测试规范"章节，删除覆盖率要求
+   - 如果 Git 提交选择"不需要"审批，修改"版本控制"规则，移除 AskUserQuestion 要求
 
-### 4. 文件写入
+### 5. 文件写入
 
 a. 如果用户在步骤 1 中选择了"备份后覆盖"：
    - 使用 Bash date 命令生成时间戳（格式：YYYYMMDDHHmmss）
@@ -448,9 +622,9 @@ a. 如果用户在步骤 1 中选择了"备份后覆盖"：
 
 b. 使用 Write 工具将生成的内容写入 ./CLAUDE.md 文件
 
-### 5. 确认完成
+### 6. 确认完成
 
-输出成功信息：
+输出成功信息，展示完整的配置信息：
 
 ```
 ✅ 项目规范文件生成成功！
@@ -458,13 +632,19 @@ b. 使用 Write 工具将生成的内容写入 ./CLAUDE.md 文件
 📄 文件位置: ./CLAUDE.md
 📅 生成时间: {当前时间}
 
-📋 配置摘要:
-- 项目名称: {项目名称}
-- 开发语言: {语言}
-- 主要框架: {框架}
-- 架构模式: {架构}
-- 测试要求: {测试覆盖率}
-- Git 提交: {是否需要审批}
+📊 项目配置摘要:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ 项目名称: {项目名称}
+✅ 项目描述: {项目描述}
+✅ 开发语言: {语言和版本}
+✅ 主要框架: {框架}
+✅ 数据存储: {数据存储技术}
+✅ 架构模式: {架构模式}
+✅ 命名规范: {命名规范}
+✅ 测试要求: {测试覆盖率}
+✅ Git 提交: {是否需要审批}
+
+🎯 自动检测项数: {检测成功的项数}/{总项数}
 
 💡 下一步操作:
 1. 查看生成的 CLAUDE.md 文件
@@ -483,8 +663,13 @@ b. 使用 Write 工具将生成的内容写入 ./CLAUDE.md 文件
 ### ✅ 跨平台特性
 
 1. **内置模板** - 不需要读取外部文件，避免路径问题
-2. **Claude Code 工具** - 仅使用跨平台的内置工具（Read, Write, AskUserQuestion）
-3. **最小 Bash 依赖** - 仅使用 `date` 命令（Windows/Mac/Linux 均支持）
+2. **Claude Code 工具** - 仅使用跨平台的内置工具
+   - Read/Write: 文件读写
+   - Glob: 文件查找（跨平台模式匹配）
+   - Grep: 内容搜索（跨平台正则表达式）
+   - AskUserQuestion: 用户交互
+   - Bash date: 时间戳生成（Windows/Mac/Linux 均支持）
+3. **最小依赖** - 仅依赖标准工具，无需额外安装
 4. **相对路径** - 使用 `./CLAUDE.md` 相对路径，适配所有系统
 
 ### 🖥️ 系统支持
@@ -494,28 +679,58 @@ b. 使用 Write 工具将生成的内容写入 ./CLAUDE.md 文件
 - ✅ **Linux**: 完全支持
 - ✅ **WSL**: 完全支持
 
-### 📝 注意事项
+### 📝 核心改进
 
-1. **用户体验优先**：
-   - 每个问题的 options 都提供详细的 description
-   - 提供合理的默认值，允许用户快速完成
-   - 问题顺序符合逻辑（基础信息 → 技术栈 → 架构 → 规则）
+1. **智能分析优先**：
+   - 自动检测项目配置文件（package.json, go.mod, pyproject.toml 等）
+   - 智能推断技术栈、架构模式、代码风格
+   - 减少用户输入负担，提升体验
 
-2. **错误处理**：
+2. **数据驱动决策**：
+   - 基于实际项目数据进行推断
+   - 避免猜测和假设
+   - 置信度评估确保准确性
+
+3. **按需询问**：
+   - 只对无法确定的信息询问用户
+   - 提供检测到的值作为推荐选项
+   - 灵活的分批询问策略
+
+4. **错误处理**：
    - 文件读写失败时，提供清晰的错误信息
    - 权限不足时，建议用户检查目录权限
    - 用户输入验证（避免空值）
 
-3. **灵活性**：
-   - 所有占位符如果用户未提供，使用合理的默认值或留空
-   - 支持"Other"选项让用户自定义
-   - 允许多选（数据存储）
+5. **灵活性**：
+   - 支持空项目（使用传统询问模式）
+   - 支持已有项目（智能分析模式）
+   - 允许用户覆盖自动检测的结果
 
-4. **向后兼容**：
+6. **向后兼容**：
    - 备份机制确保不会丢失现有配置
    - 提供清晰的操作提示和确认
 
-5. **遵循 KISS 原则**：
+7. **遵循 KISS 原则**：
    - 不进行过度验证
    - 不添加不必要的功能
-   - 专注于核心任务：收集信息 → 生成文件
+   - 专注于核心任务：分析项目 → 收集信息 → 生成文件
+
+### 🎯 最佳实践
+
+**对于新项目（空目录）**:
+- 命令会检测到没有配置文件
+- 自动切换到询问模式
+- 引导用户完成所有配置
+
+**对于已有项目**:
+- 命令会自动分析项目文件
+- 提取尽可能多的信息
+- 只对不确定的信息进行询问
+- 展示分析结果供用户确认
+
+**最佳工作流程**:
+1. 在项目根目录运行命令
+2. 查看自动分析结果
+3. 确认或修改推断的信息
+4. 生成规范文件
+5. 根据实际需求微调细节
