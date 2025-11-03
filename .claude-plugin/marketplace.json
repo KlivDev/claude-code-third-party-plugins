@@ -17,11 +17,7 @@
         "email": "wangxuecheng@example.com"
       },
       "source": "./plugins/project-init",
-      "category": "productivity",
-      "keywords": ["init", "setup", "template", "configuration", "project-management"],
-      "commands": [
-        "/project-init"
-      ]
+      "category": "productivity"
     }
   ]
 }
