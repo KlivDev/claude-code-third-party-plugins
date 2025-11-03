@@ -18,6 +18,17 @@
       },
       "source": "./plugins/project-init",
       "category": "productivity"
+    },
+    {
+      "name": "session-manager",
+      "description": "智能保存和恢复 Claude Code 会话，支持进度跟踪、决策记录和工作连续性，采用项目本地存储和智能数据访问设计",
+      "version": "1.0.0",
+      "author": {
+        "name": "Wang Xuecheng",
+        "email": "ahut17353766123@gmail.com"
+      },
+      "source": "./plugins/session-manager",
+      "category": "productivity"
     }
   ]
 }

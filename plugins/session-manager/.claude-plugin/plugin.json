@@ -1,0 +1,19 @@
+{
+  "name": "session-manager",
+  "description": "会话管理插件 - 智能保存和恢复 Claude Code 会话，支持进度跟踪和工作连续性",
+  "version": "1.0.0",
+  "author": {
+    "name": "Wang Xuecheng",
+    "email": "ahut17353766123@gmail.com"
+  },
+  "commands": {
+    "save-session": {
+      "description": "总结并保存当前会话到本地存储",
+      "file": "commands/save-session.md"
+    },
+    "continue-session": {
+      "description": "搜索并继续之前保存的会话",
+      "file": "commands/continue-session.md"
+    }
+  }
+}

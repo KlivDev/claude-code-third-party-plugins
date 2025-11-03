@@ -1,0 +1,15 @@
+# Claude Code Sessions - 忽略会话数据
+
+# 忽略所有会话数据（推荐用于个人开发）
+.claude-sessions/
+
+# === 或者使用以下配置（适合团队协作） ===
+
+# 忽略完整对话记录（大文件）
+# .claude-sessions/summaries/*/details.jsonl
+
+# 忽略导出文件（临时文件）
+# .claude-sessions/exports/
+
+# 保留摘要文件（可选，用于团队共享决策历史）
+# !.claude-sessions/summaries/*/summary.json
