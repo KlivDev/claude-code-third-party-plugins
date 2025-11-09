@@ -44,47 +44,33 @@ Claude Code 插件是通过自定义斜杠命令（Slash Commands）、专用代
 
 ## 📥 安装方法
 
-### 方式一：使用 Claude Code 命令安装（推荐）
+### 方式一：交互式安装（最简单）
+
+在 Claude Code 会话中执行：
 
 ```bash
 # 1. 添加插件市场
-claude plugin marketplace add https://github.com/ChamHerry/claude-code-third-party-plugins
+/plugin marketplace add https://github.com/ChamHerry/claude-code-third-party-plugins
 
-# 2. 安装插件
-claude plugin install project-init
+# 2. 打开插件管理界面
+/plugin
 
+# 3. 选择 "Browse Plugins"，然后找到并安装 project-init
 ```
 
-### 方式二：手动克隆安装
+### 方式二：命令行安装
+
+在 Claude Code 会话中执行：
 
 ```bash
-# 克隆插件市场仓库
-git clone https://github.com/ChamHerry/claude-code-third-party-plugins.git
-cd claude-code-third-party-plugins
+# 1. 添加插件市场
+/plugin marketplace add https://github.com/ChamHerry/claude-code-third-party-plugins
 
-# 复制插件到 Claude Code 全局目录
-cp -r plugins/* ~/.claude/plugins/
+# 2. 直接安装插件（需要指定市场名称）
+/plugin install project-init@claude-code-third-party-plugins
 ```
 
-### 方式三：项目级安装
-
-```bash
-# 在项目目录下
-cd /path/to/your/project
-
-# 克隆插件仓库
-git clone https://github.com/ChamHerry/claude-code-third-party-plugins.git .claude-plugins
-
-# 在 .claude/settings.json 中配置插件路径
-```
-
-### 方式四：单个插件安装
-
-```bash
-# 仅安装特定插件
-git clone https://github.com/ChamHerry/claude-code-third-party-plugins.git
-cp -r claude-code-third-party-plugins/plugins/project-init ~/.claude/plugins/
-```
+> **注意**：使用命令行安装时，必须指定 `@marketplace-name` 来明确插件来源。
 
 ## 🚀 使用插件
 
@@ -100,27 +86,31 @@ claude
 
 ### 📦 插件管理命令
 
+在 Claude Code 会话中使用以下命令：
+
 ```bash
-# 查看所有已安装的插件
-claude plugin list
+# 打开插件管理界面（可视化管理）
+/plugin
 
-# 查看配置的市场
-claude plugin marketplace list
+# 浏览可用插件
+/plugin
+# 然后选择 "Browse Plugins"
 
-# 更新市场信息
-claude plugin marketplace update
+# 管理已安装的插件
+/plugin
+# 然后选择 "Manage Plugins"
 
 # 卸载插件
-claude plugin uninstall project-init
+/plugin uninstall project-init@claude-code-third-party-plugins
 
 # 禁用插件（不删除）
-claude plugin disable project-init
+/plugin disable project-init@claude-code-third-party-plugins
 
-# 启用插件
-claude plugin enable project-init
+# 启用已禁用的插件
+/plugin enable project-init@claude-code-third-party-plugins
 
-# 验证插件配置
-claude plugin validate ~/.claude/plugins/project-init
+# 查看所有可用命令（包括插件命令）
+/help
 ```
 
 ## 📖 插件文档
