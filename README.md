@@ -53,7 +53,6 @@ claude plugin marketplace add https://github.com/ChamHerry/claude-code-third-par
 # 2. 安装插件
 claude plugin install project-init
 
-
 ```
 
 ### 方式二：手动克隆安装
